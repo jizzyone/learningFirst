@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE-edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script> 
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Don't use this in production:-->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <title>Document</title>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+
+    const SYMBOL_O = 'O';
+    const SYMBOL_X = 'X';
+    const SYMBOL_Y = 'Y';
+    const SYMBOL_Z = 'Z';
+    
+    
+    const computeWin = (cells) => {
+        const lines = [
+            // пары O
+            [0,3],
+            [0,9],
+            [0,14],
+            [3,9],
+            [3,14],
+            [9,14],
+            // пары Y
+            [1,7],
+            [1,10],
+            [1,15],
+            [7,10],
+            [7,15],
+            [10,15],
+            // пары X
+            [2,6],
+            [2,8],
+            [2,12],
+            [6,8],
+            [6,12],
+            [8,12],
+            // пары Z
+            [4,5],
+            [4,11],
+            [4,13],
+            [5,11],
+            [5,13],
+            [11,13]
+        ];
+        
+        for (let i = 0; i < lines.length; i++) {
+        const [a, b] = lines[i];
+        if (
+          cells[a] && cells[b] && 
+          cells[a] === cells[b]
+        ) {
+            return [a, b]
+        }        
+      }
+      return null;
+    }
+    function isNull(inputArray) {
+        if (inputArray.length) {
+            var currentElement = inputArray[0];
+            for (var i = 1, len = inputArray.length; i < len && currentElement === null; i += 1) {
+                currentElement = currentElement || inputArray[i];
+            }
+            if (currentElement !== null) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+        
+    const startCells = [
+        SYMBOL_O,
+        SYMBOL_Y,
+        SYMBOL_X,
+        SYMBOL_O,
+        SYMBOL_Z,
+        SYMBOL_Z,
+        SYMBOL_X,
+        SYMBOL_Y,
+        SYMBOL_X,
+        SYMBOL_O,
+        SYMBOL_Y,
+        SYMBOL_Z,
+        SYMBOL_X,
+        SYMBOL_Z,
+        SYMBOL_O,
+        SYMBOL_Y
+    ]
+
+    function useGameState() {
+        const [count,setCount] = React.useState(0);
+        const [cells,setCells] = React.useState(startCells);
+        const [selectedCells, setSelectedCells] = React.useState([]);
+
+        const restartGame = () => {
+                setCount(0);
+                setCells(startCells);
+            }
+        
+        const handleCellClick = (index) => {
+            const winningCells = computeWin(cells);
+            console.log('click',index);                
+            if (selectedCells.length === 0) {
+                setSelectedCells([index]);
+            } else {
+                const [firstIndex] = selectedCells;
+                const winningCombination = computeWin(cells);
+
+                if (winningCombination && (winningCombination.includes(firstIndex) && winningCombination.includes(index)) && (firstIndex !== index)) {
+                const cellsCopy = [...cells];
+                cellsCopy[firstIndex] = null;
+                cellsCopy[index] = null;
+                setCount(count+1);
+                setCells(cellsCopy);
+                setSelectedCells([]);                    
+                } else {
+                setSelectedCells([index]);
+                }
+            }
+        }
+        return {count,cells,selectedCells,restartGame,handleCellClick};
+    }
+
+        function App(){
+
+            const {count,cells,selectedCells,restartGame,handleCellClick} = useGameState();
+
+            return (
+            <div className="game">
+                <div className="game_title">Игра: "Соедини символы"</div>
+                <GameInfo 
+                count = {count}
+                cells = {cells}
+                isNull = {isNull()}
+                />
+                <div className="table">
+                    {cells.map((symbol,index) => {
+                        return <button className='symbol' key={index} onClick={() => handleCellClick(index)}>{symbol || ''}</button>
+                    })
+                }
+                </div>
+                <button className='restart' onClick={restartGame}>Restart</button>
+            </div>
+
+            );
+
+        }
+
+    
+        function GameInfo(count,cells,isNull) {
+            return (
+            <div className="game_info">{isNull(cells) ? 'Поздравляю! Вы выиграли!' : `Количество найденных пар: ${count}`}</div>
+            )
+        }
+        
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+
+        root.render(<App/>)
+
+</script>
+<style>
+    html {
+    font-family: Arial, Helvetica, sans-serif;
+    }
+    
+    .game{
+    display: flex;
+    flex-direction: column; align-items: center;
+    width: 500px;
+    margin: 100px auto;
+    padding: 20px;
+    }
+
+    .game_title{
+        margin-bottom: 20px;
+        width: 400px;
+        font-weight: bold;
+        font-size: 30px;
+    }
+
+    .game_info{
+        margin-bottom: 30px;
+        font-weight: lighter;
+        font-size: 15px;
+    }
+
+    .table{
+        display: grid;
+        grid-template-columns: repeat(4, 50px);
+        grid-template-rows: repeat(4, 50px);
+        padding: 1px 0 0 1px;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .symbol{
+        font-size: 20px;
+    }
+
+    .restart{
+        width: 100px;
+    }
+    
